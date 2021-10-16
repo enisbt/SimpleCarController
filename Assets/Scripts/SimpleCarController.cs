@@ -1,15 +1,24 @@
 ﻿using UnityEngine;
 
+enum SpeedType
+{
+    KPH,
+    MPH
+}
+
 public class SimpleCarController : MonoBehaviour
 {
     [SerializeField] private float maxSteerAngle;
     [SerializeField] private float motorForce;
     [SerializeField] private float brakeForce;
+    [SerializeField] private float topSpeed;
+    [SerializeField] private SpeedType speedType;
     [SerializeField] private float antiRoll = 1000f;
     [SerializeField] private bool tractionControl = true;
     [SerializeField] private float slipLimit = 0.3f;
     [SerializeField] private bool steeringAssist = true;
     [SerializeField] private float steeringAssistRatio = 0.5f;
+    [SerializeField] private int numberOfGears;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4];
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
 
@@ -19,6 +28,8 @@ public class SimpleCarController : MonoBehaviour
     private float verticalInput;
     private bool isReversing = false;
     private float rotationInPreviousFrame;
+    private int currentGear = 0;
+    private float currentSpeed;
  
     private void Start()
     {
@@ -30,6 +41,7 @@ public class SimpleCarController : MonoBehaviour
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
 
+        UpdateCurrentSpeed();
         HandleSteering();
         HandleDrive();
         HandleWheelTransform();
@@ -38,6 +50,19 @@ public class SimpleCarController : MonoBehaviour
         DetectReverse();
         TractionControl();
         SteeringAssist();
+        HandleGearChange();
+    }
+
+    private void UpdateCurrentSpeed()
+    {
+        if (speedType == SpeedType.KPH)
+        {
+            currentSpeed = rb.velocity.magnitude * 3.6f;
+        }
+        else
+        {
+            currentSpeed = rb.velocity.magnitude * 2.23693629f;
+        }
     }
 
     private void HandleSteering()
@@ -157,9 +182,26 @@ public class SimpleCarController : MonoBehaviour
         if (Mathf.Abs(rotationInPreviousFrame - transform.eulerAngles.y) < 10f && steeringAssist)
         {
             var turnadjust = (transform.eulerAngles.y - rotationInPreviousFrame) * steeringAssistRatio;
-            Quaternion velRotation = Quaternion.AngleAxis(turnadjust, Vector3.up);
-            rb.velocity = velRotation * rb.velocity;
+            Quaternion velocityRotation = Quaternion.AngleAxis(turnadjust, Vector3.up);
+            rb.velocity = velocityRotation * rb.velocity;
         }
         rotationInPreviousFrame = transform.eulerAngles.y;
+    }
+
+    private void HandleGearChange()
+    {
+        float speedRatio = Mathf.Abs(currentSpeed / topSpeed);
+        float upshiftLimit = 1 / (float) numberOfGears * (currentGear + 1);
+        float downshiftLimit = 1 / (float) numberOfGears * currentGear;
+        
+        if (currentGear > 0 && speedRatio < downshiftLimit)
+        {
+            currentGear--;
+        }
+
+        if (speedRatio > upshiftLimit && (currentGear < (numberOfGears - 1)))
+        {
+            currentGear++;
+        }
     }
 }
