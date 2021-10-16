@@ -6,6 +6,8 @@ public class SimpleCarController : MonoBehaviour
     [SerializeField] private float motorForce;
     [SerializeField] private float brakeForce;
     [SerializeField] private float antiRoll = 1000f;
+    [SerializeField] private bool tractionControl = true;
+    [SerializeField] private float slipLimit = 0.3f;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4];
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
 
@@ -31,6 +33,7 @@ public class SimpleCarController : MonoBehaviour
         
         AntiRoll();
         DetectReverse();
+        TractionControl();
     }
 
     private void HandleSteering()
@@ -125,5 +128,23 @@ public class SimpleCarController : MonoBehaviour
             rpmSum += wheelColliders[i].rpm;
         }
         isReversing = rpmSum / wheelColliders.Length < 0;
+    }
+
+    private void TractionControl()
+    {
+        if (tractionControl)
+        {
+            WheelHit hit;
+            wheelColliders[0].GetGroundHit(out hit);
+            if (hit.forwardSlip >= slipLimit && wheelColliders[0].motorTorque > 0)
+            {
+                wheelColliders[0].motorTorque *= 0.9f;
+            }
+            wheelColliders[1].GetGroundHit(out hit);
+            if (hit.forwardSlip >= slipLimit && wheelColliders[1].motorTorque > 0)
+            {
+                wheelColliders[1].motorTorque *= 0.9f;
+            }
+        }
     }
 }
