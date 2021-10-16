@@ -8,6 +8,8 @@ public class SimpleCarController : MonoBehaviour
     [SerializeField] private float antiRoll = 1000f;
     [SerializeField] private bool tractionControl = true;
     [SerializeField] private float slipLimit = 0.3f;
+    [SerializeField] private bool steeringAssist = true;
+    [SerializeField] private float steeringAssistRatio = 0.5f;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4];
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
 
@@ -16,6 +18,7 @@ public class SimpleCarController : MonoBehaviour
     private float horizontalInput;
     private float verticalInput;
     private bool isReversing = false;
+    private float rotationInPreviousFrame;
  
     private void Start()
     {
@@ -34,6 +37,7 @@ public class SimpleCarController : MonoBehaviour
         AntiRoll();
         DetectReverse();
         TractionControl();
+        SteeringAssist();
     }
 
     private void HandleSteering()
@@ -146,5 +150,16 @@ public class SimpleCarController : MonoBehaviour
                 wheelColliders[1].motorTorque *= 0.9f;
             }
         }
+    }
+
+    private void SteeringAssist()
+    {
+        if (Mathf.Abs(rotationInPreviousFrame - transform.eulerAngles.y) < 10f && steeringAssist)
+        {
+            var turnadjust = (transform.eulerAngles.y - rotationInPreviousFrame) * steeringAssistRatio;
+            Quaternion velRotation = Quaternion.AngleAxis(turnadjust, Vector3.up);
+            rb.velocity = velRotation * rb.velocity;
+        }
+        rotationInPreviousFrame = transform.eulerAngles.y;
     }
 }
