@@ -30,6 +30,8 @@ public class SimpleCarController : MonoBehaviour
     private float rotationInPreviousFrame;
     private int currentGear = 0;
     private float currentSpeed;
+    private float gearFactor;
+    private float engineRpm;
  
     private void Start()
     {
@@ -51,6 +53,9 @@ public class SimpleCarController : MonoBehaviour
         TractionControl();
         SteeringAssist();
         HandleGearChange();
+        CalculateEngineRevs();
+        
+        Debug.Log(engineRpm);
     }
 
     private void UpdateCurrentSpeed()
@@ -203,5 +208,31 @@ public class SimpleCarController : MonoBehaviour
         {
             currentGear++;
         }
+    }
+    
+    private static float ULerp(float from, float to, float value)
+    {
+        return (1.0f - value) * from + value * to;
+    }
+    
+    private static float CurveFactor(float factor)
+    {
+        return 1 - (1 - factor) * (1 - factor);
+    }
+
+    private void CalculateGearFactor()
+    {
+        float f = (1/(float) numberOfGears);
+        var targetGearFactor = Mathf.InverseLerp(f*currentGear, f*(currentGear + 1), Mathf.Abs(currentSpeed/topSpeed));
+        gearFactor = Mathf.Lerp(gearFactor, targetGearFactor, Time.deltaTime*5f);
+    }
+    
+    private void CalculateEngineRevs()
+    {
+        CalculateGearFactor();
+        var gearNumFactor = currentGear/(float) numberOfGears;
+        var revsRangeMin = ULerp(0f, 1f, CurveFactor(gearNumFactor));
+        var revsRangeMax = ULerp(1f, 1f, gearNumFactor);
+        engineRpm = ULerp(revsRangeMin, revsRangeMax, gearFactor);
     }
 }
