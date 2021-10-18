@@ -21,6 +21,9 @@ public class SimpleCarController : MonoBehaviour
     [SerializeField] private int numberOfGears;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4];
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
+    [SerializeField] AudioSource audioSource;
+    [SerializeField] private float minimumPitch;
+    [SerializeField] private float maximumPitch;
 
     private Rigidbody rb;
     
@@ -54,8 +57,7 @@ public class SimpleCarController : MonoBehaviour
         SteeringAssist();
         HandleGearChange();
         CalculateEngineRevs();
-        
-        Debug.Log(engineRpm);
+        HandleAudio();
     }
 
     private void UpdateCurrentSpeed()
@@ -234,5 +236,17 @@ public class SimpleCarController : MonoBehaviour
         var revsRangeMin = ULerp(0f, 1f, CurveFactor(gearNumFactor));
         var revsRangeMax = ULerp(1f, 1f, gearNumFactor);
         engineRpm = ULerp(revsRangeMin, revsRangeMax, gearFactor);
+    }
+
+    private void HandleAudio()
+    {
+        float pitch = ULerp(minimumPitch, maximumPitch, engineRpm);
+
+        if (pitch < minimumPitch)
+        {
+            pitch = minimumPitch;
+        }
+
+        audioSource.pitch = pitch;
     }
 }
