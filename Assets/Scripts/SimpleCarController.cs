@@ -19,11 +19,12 @@ public class SimpleCarController : MonoBehaviour
     [SerializeField] private bool steeringAssist = true;
     [SerializeField] private float steeringAssistRatio = 0.5f;
     [SerializeField] private int numberOfGears;
-    [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4];
-    [SerializeField] private Transform[] wheelMeshes = new Transform[4];
-    [SerializeField] AudioSource audioSource;
+    [SerializeField] private AudioSource audioSource;
     [SerializeField] private float minimumPitch;
     [SerializeField] private float maximumPitch;
+    [SerializeField] private float boostZoneMultiplier;
+    [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4];
+    [SerializeField] private Transform[] wheelMeshes = new Transform[4];
 
     private Rigidbody rb;
     
@@ -35,9 +36,11 @@ public class SimpleCarController : MonoBehaviour
     private float currentSpeed;
     private float gearFactor;
     private float engineRpm;
+    private float motorForceWithoutBoost;
  
     private void Start()
     {
+        motorForceWithoutBoost = motorForce;
         rb = GetComponent<Rigidbody>();
     }
 
@@ -80,19 +83,24 @@ public class SimpleCarController : MonoBehaviour
 
     private void HandleDrive()
     {
-        wheelColliders[0].motorTorque = motorForce * verticalInput;
-        wheelColliders[1].motorTorque = motorForce * verticalInput;
+        wheelColliders[0].motorTorque = motorForce * verticalInput / 2;
+        wheelColliders[1].motorTorque = motorForce * verticalInput / 2;
         
         if (!isReversing && verticalInput < 0 && rb.velocity.magnitude > 1)
-        { // Braking
-            for (int i = 0; i < wheelColliders.Length; i++)
-            {
-                wheelColliders[i].brakeTorque = -brakeForce * verticalInput;
-            }
+        {
+            ApplyBrakes();
         }
         else
         {
             ResetBrakes();
+        }
+    }
+
+    private void ApplyBrakes()
+    {
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            wheelColliders[i].brakeTorque = -brakeForce * verticalInput;
         }
     }
 
@@ -248,5 +256,25 @@ public class SimpleCarController : MonoBehaviour
         }
 
         audioSource.pitch = pitch;
+    }
+
+    public float GetCurrentSpeed()
+    {
+        return Mathf.Floor(currentSpeed);
+    }
+
+    public void MuteAudio()
+    {
+        audioSource.volume = 0;
+    }
+    
+    public void ActivateBoost()
+    {
+        motorForce = motorForceWithoutBoost * boostZoneMultiplier;
+    }
+
+    public void DeactivateBoost()
+    {
+        motorForce = motorForceWithoutBoost;
     }
 }
