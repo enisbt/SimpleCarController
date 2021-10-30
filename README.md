@@ -50,3 +50,11 @@ Car controller expects wheel colliders and wheel meshes in this order:
 ### Boost zones
 
 Call the `ActivateBoost()` on car controller to activate the speed boost, call `DeactivateBoost()` to cancel it.
+
+# Roadmap
+
+- [ ] More drivetrains (4WD, RWD, AWD)
+- [ ] Support more than 4 wheel
+- [ ] Better sound
+- [ ] Improve gears and engine rpm
+- [ ] Proper documentation and video tutorial
